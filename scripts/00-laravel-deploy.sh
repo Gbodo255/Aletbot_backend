@@ -16,9 +16,13 @@ else
     echo "APP_KEY is already set: ${APP_KEY:0:20}..."
 fi
 
-# Install composer dependencies
-echo "Installing dependencies..."
-composer install --no-dev --optimize-autoloader --no-interaction
+# Install composer dependencies if missing
+if [ ! -f vendor/autoload.php ]; then
+    echo "Installing dependencies..."
+    composer install --no-dev --optimize-autoloader --no-interaction
+else
+    echo "Dependencies already installed, skipping composer install."
+fi
 
 # Set permissions for storage and cache (just in case)
 chown -R www-data:www-data storage bootstrap/cache
@@ -35,6 +39,13 @@ echo "Rebuilding caches..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+
+# Configure Apache to use Render's assigned port if necessary
+if [ -n "$PORT" ] && [ "$PORT" != "80" ]; then
+    echo "Configuring Apache to listen on port $PORT"
+    sed -i "s/Listen 80/Listen $PORT/" /etc/apache2/ports.conf
+    sed -i "s/<VirtualHost \*:80>/<VirtualHost \*:$PORT>/" /etc/apache2/sites-available/000-default.conf
+fi
 
 # Test database connection before running migrations
 echo "Testing database connection..."
