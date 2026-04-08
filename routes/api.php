@@ -46,6 +46,15 @@ Route::prefix('v1')->group(function () {
         ]);
     });
 
+    // Simple test route (no database dependency)
+    Route::get('/ping', function () {
+        return response()->json([
+            'pong' => true,
+            'timestamp' => now(),
+            'message' => 'API is responding'
+        ]);
+    });
+
     // Debug endpoint (remove in production)
     Route::get('/debug', function () {
         return response()->json([

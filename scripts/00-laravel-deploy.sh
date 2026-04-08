@@ -91,6 +91,15 @@ fi
 # Create storage link if it doesn't exist
 php artisan storage:link || true
 
+# Enable PHP error logging
+echo "Enabling PHP error logging..."
+echo "error_log = /var/www/html/storage/logs/php_errors.log" >> /usr/local/etc/php/conf.d/error-logging.ini
+echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini
+echo "error_reporting = E_ALL" >> /usr/local/etc/php/conf.d/error-logging.ini
+mkdir -p /var/www/html/storage/logs
+touch /var/www/html/storage/logs/php_errors.log
+chown www-data:www-data /var/www/html/storage/logs/php_errors.log
+
 # Test if Laravel can boot properly
 echo "Testing Laravel application boot..."
 if php artisan --version; then
@@ -101,7 +110,7 @@ fi
 
 # Clear any remaining caches and test a simple route
 echo "Testing application with a simple artisan command..."
-php artisan route:list --compact | head -5
+php artisan route:list | head -5
 
 echo "Deployment script finished successfully."
 # Start Apache in the foreground
