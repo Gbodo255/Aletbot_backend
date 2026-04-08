@@ -225,7 +225,11 @@ class AlertService
             throw new \RuntimeException('Telegram bot token or chat id is not configured');
         }
 
-        $response = Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+        $http = Http::withOptions([
+            'verify' => app()->environment('local') ? false : true,
+        ]);
+
+        $response = $http->post("https://api.telegram.org/bot{$token}/sendMessage", [
             'chat_id' => $chatId,
             'text' => $message,
             'parse_mode' => 'HTML',
