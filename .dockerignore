@@ -5,7 +5,7 @@
 .env
 .git
 .gitignore
-.docker
+# .docker folder intentionally not ignored for Apache config
 Dockerfile
 render.yaml
 storage/*.key
