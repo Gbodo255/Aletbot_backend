@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Alert;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class AlertService
 {
@@ -18,23 +19,42 @@ class AlertService
     {
         try {
             $formattedMessage = $this->formatMessage($alert);
+            $channels = $alert->channels ?? [];
+            $sentVia = [];
 
-            // Log the alert in Laravel logs (simulation of sending)
-            Log::info("TELEGRAM MESSAGE (SIMULATED):\n" . $formattedMessage);
+            if (in_array('telegram', $channels, true)) {
+                if ($this->hasTelegramConfig()) {
+                    $sendResult = $this->sendViaTelegram($formattedMessage);
+                    if (!$sendResult['ok']) {
+                        throw new \RuntimeException('Telegram API error: ' . ($sendResult['description'] ?? 'unknown error'));
+                    }
+
+                    Log::info('TELEGRAM MESSAGE SENT', ['alert_id' => $alert->id]);
+                    $sentVia[] = 'telegram';
+                } else {
+                    Log::warning('Telegram configuration missing, fallback to simulation', ['alert_id' => $alert->id]);
+                    Log::info("TELEGRAM MESSAGE (SIMULATED):\n" . $formattedMessage);
+                    $sentVia[] = 'telegram-simulated';
+                }
+            } else {
+                Log::info("ALERT MESSAGE (SIMULATED):\n" . $formattedMessage);
+                $sentVia[] = 'simulated';
+            }
 
             // Mark alert as sent
             $alert->markAsSent();
 
             // Log activity
-            $this->logActivity($alert, 'alert.sent', "Alert from '{$alert->reporter_name}' sent successfully (Simulated)");
+            $this->logActivity($alert, 'alert.sent', "Alert from '{$alert->reporter_name}' sent via " . implode(',', $sentVia));
 
             return [
                 'status' => 'success',
-                'message' => 'Alerte envoyée (simulation Telegram)',
+                'message' => 'Alerte envoyée',
                 'data' => [
                     'alert_id' => $alert->id,
                     'sent_at' => $alert->sent_at?->toISOString(),
                     'status' => $alert->status,
+                    'sent_via' => $sentVia,
                     'message_preview' => substr($formattedMessage, 0, 100) . '...',
                 ]
             ];
@@ -196,6 +216,40 @@ class AlertService
      * @param string $description
      * @return void
      */
+    private function sendViaTelegram(string $message): array
+    {
+        $token = $this->getTelegramBotToken();
+        $chatId = $this->getTelegramChatId();
+
+        if (!$token || !$chatId) {
+            throw new \RuntimeException('Telegram bot token or chat id is not configured');
+        }
+
+        $response = Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+            'chat_id' => $chatId,
+            'text' => $message,
+            'parse_mode' => 'HTML',
+            'disable_web_page_preview' => true,
+        ]);
+
+        return $response->json();
+    }
+
+    private function hasTelegramConfig(): bool
+    {
+        return !empty($this->getTelegramBotToken()) && !empty($this->getTelegramChatId());
+    }
+
+    private function getTelegramBotToken(): ?string
+    {
+        return config('services.telegram.bot_token') ?: env('TELEGRAM_BOT_TOKEN');
+    }
+
+    private function getTelegramChatId(): ?string
+    {
+        return config('services.telegram.chat_id') ?: env('TELEGRAM_CHAT_ID');
+    }
+
     private function logActivity(Alert $alert, string $action, string $description): void
     {
         // Import ActivityLog model
