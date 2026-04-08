@@ -23,9 +23,15 @@ composer install --no-dev --optimize-autoloader --no-interaction
 # Set permissions for storage and cache (just in case)
 chown -R www-data:www-data storage bootstrap/cache
 
-# Clear and cache configuration
-echo "Caching configuration..."
+# Clear all caches first
+echo "Clearing all caches..."
+php artisan cache:clear
 php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+# Then rebuild caches
+echo "Rebuilding caches..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache

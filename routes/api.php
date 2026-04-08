@@ -80,13 +80,13 @@ Route::prefix('v1')->group(function () {
 
         // Alerts
         Route::prefix('alerts')->group(function () {
+            Route::get('/history', [AlertController::class, 'history']);
             Route::get('/', [AlertController::class, 'index']);
             Route::post('/', [AlertController::class, 'store']);
-            Route::get('/history', [AlertController::class, 'history']);
             Route::get('/{alert}', [AlertController::class, 'show']);
             Route::put('/{alert}', [AlertController::class, 'update']);
-            Route::delete('/{alert}', [AlertController::class, 'destroy']);
             Route::post('/{alert}/send', [AlertController::class, 'send']);
+            Route::delete('/{alert}', [AlertController::class, 'destroy']);
         });
     });
 });
