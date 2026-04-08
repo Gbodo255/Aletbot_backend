@@ -4,6 +4,8 @@ services:
     runtime: docker
     plan: free # Change to starter for better performance
     region: frankfurt # Or your preferred region
+    buildCommand: "echo 'Build completed'"
+    startCommand: "/var/www/html/scripts/00-laravel-deploy.sh"
     envVars:
       - key: APP_ENV
         value: production

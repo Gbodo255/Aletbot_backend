@@ -13,15 +13,16 @@ $token = ''; // Will be set after login
 // Test data
 $testUser = [
     'name' => 'Test User',
-    'email' => 'test@example.com',
+    'email' => 'test' . time() . '@example.com', // Unique email
     'password' => 'password123',
     'password_confirmation' => 'password123'
 ];
 
 $testAlert = [
-    'name' => 'Alerte de test',
+    'reporter_name' => 'Test Reporter',
     'content' => 'Ceci est une alerte de test automatique',
-    'urgency_level' => 'medium',
+    'type' => 'Alerte',
+    'urgency_level' => 'Moyen',
     'channels' => ['telegram']
 ];
 
@@ -32,31 +33,32 @@ function makeRequest($url, $method = 'GET', $data = null, $headers = []) {
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false); // Don't follow redirects
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array_merge([
+        'Content-Type: application/json',
+        'Accept: application/json'
+    ], $headers));
 
     if ($data) {
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        $headers[] = 'Content-Type: application/json';
-    }
-
-    if (!empty($headers)) {
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     }
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $effectiveUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
 
     curl_close($ch);
 
-    return [$httpCode, json_decode($response, true)];
+    return [$httpCode, json_decode($response, true), $effectiveUrl];
 }
 
 // Test 1: Register user
 echo "1. Création d'utilisateur de test...\n";
-list($code, $response) = makeRequest("$baseUrl/auth/register", 'POST', $testUser);
+list($code, $response, $effectiveUrl) = makeRequest("$baseUrl/auth/register", 'POST', $testUser);
 
 if ($code === 201) {
     echo "✅ Utilisateur créé avec succès\n";
-    $token = $response['data']['token'] ?? '';
+    $token = $response['token'] ?? '';
 } else {
     echo "❌ Erreur création utilisateur: " . ($response['message'] ?? 'Unknown error') . "\n";
     exit(1);
@@ -71,7 +73,7 @@ list($code, $response) = makeRequest("$baseUrl/auth/login", 'POST', [
 
 if ($code === 200) {
     echo "✅ Connexion réussie\n";
-    $token = $response['data']['token'];
+    $token = $response['token'];
 } else {
     echo "❌ Erreur connexion: " . ($response['message'] ?? 'Unknown error') . "\n";
     exit(1);

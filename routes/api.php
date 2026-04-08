@@ -11,6 +11,35 @@ use App\Http\Controllers\Api\AlertController;
 
 // Public routes
 Route::prefix('v1')->group(function () {
+    // Health check
+    Route::get('/health', function () {
+        try {
+            // Test database connection
+            \DB::connection()->getPdo();
+            $dbStatus = 'connected';
+        } catch (\Exception $e) {
+            $dbStatus = 'error: ' . $e->getMessage();
+        }
+
+        // Get migrations count
+        try {
+            $migrationsCount = \DB::table('migrations')->count();
+            $migrationsStatus = "{$migrationsCount} migrations";
+        } catch (\Exception $e) {
+            $migrationsStatus = 'error: ' . $e->getMessage();
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'timestamp' => now(),
+            'database' => $dbStatus,
+            'migrations' => $migrationsStatus,
+            'environment' => app()->environment(),
+            'debug' => config('app.debug'),
+            'version' => app()->version(),
+        ]);
+    });
+
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
 
