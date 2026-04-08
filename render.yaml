@@ -39,6 +39,12 @@ services:
           property: password
       - key: DB_SSLMODE
         value: require
+      - key: SESSION_DRIVER
+        value: file
+      - key: CACHE_STORE
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
 
 databases:
   - name: alertbot-db
