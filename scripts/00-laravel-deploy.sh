@@ -7,12 +7,14 @@ echo "Running deployment script..."
 cd /var/www/html
 
 # Check if APP_KEY is set
-if [ -z "$APP_KEY" ]; then
-    echo "APP_KEY is not set, generating one..."
+if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:" ]; then
+    echo "APP_KEY is not properly set, generating a new one..."
+    php artisan key:generate --force
     export APP_KEY=$(php artisan key:generate --show)
+    echo "Generated APP_KEY: ${APP_KEY:0:20}..."
+else
+    echo "APP_KEY is already set: ${APP_KEY:0:20}..."
 fi
-
-echo "APP_KEY is set to: ${APP_KEY:0:10}..."
 
 # Install composer dependencies
 echo "Installing dependencies..."
