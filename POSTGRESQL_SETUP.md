@@ -1,4 +1,4 @@
-# 🐘 Configuration PostgreSQL
+ # 🐘 Configuration PostgreSQL
 
 ## Vue d'ensemble
 
@@ -10,7 +10,7 @@ Le projet Laravel est maintenant configuré pour utiliser **PostgreSQL** comme b
 - **Port**: 5432
 - **Base de données**: laravel_api
 - **Utilisateur**: postgres
-- **Mot de passe**: password
+- **Mot de passe**: Skywalker
 
 ---
 
