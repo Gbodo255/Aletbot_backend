@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: alertbot-api
+    runtime: docker
+    plan: free # Change to starter for better performance
+    region: frankfurt # Or your preferred region
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: alertbot-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: alertbot-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: alertbot-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: alertbot-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: alertbot-db
+          property: password
+
+databases:
+  - name: alertbot-db
+    plan: free # Change to starter for production
+    databaseName: alertbot_db
+    user: alertbot_user
+    region: frankfurt
