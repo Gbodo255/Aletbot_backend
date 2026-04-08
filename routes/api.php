@@ -37,6 +37,32 @@ Route::prefix('v1')->group(function () {
             'environment' => app()->environment(),
             'debug' => config('app.debug'),
             'version' => app()->version(),
+            'php_version' => PHP_VERSION,
+            'server' => [
+                'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'] ?? 'unknown',
+                'HTTP_HOST' => $_SERVER['HTTP_HOST'] ?? 'unknown',
+                'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            ]
+        ]);
+    });
+
+    // Debug endpoint (remove in production)
+    Route::get('/debug', function () {
+        return response()->json([
+            'env' => [
+                'APP_ENV' => env('APP_ENV'),
+                'APP_DEBUG' => env('APP_DEBUG'),
+                'APP_KEY' => env('APP_KEY') ? 'set' : 'not set',
+                'DB_CONNECTION' => env('DB_CONNECTION'),
+                'DB_HOST' => env('DB_HOST'),
+                'DB_DATABASE' => env('DB_DATABASE'),
+            ],
+            'config' => [
+                'app.env' => config('app.env'),
+                'app.debug' => config('app.debug'),
+                'database.default' => config('database.default'),
+            ],
+            'timestamp' => now(),
         ]);
     });
 

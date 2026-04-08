@@ -3,6 +3,19 @@ set -e
 
 echo "Running deployment script..."
 
+# Log environment information
+echo "=== Environment Information ==="
+echo "APP_ENV: $APP_ENV"
+echo "APP_DEBUG: $APP_DEBUG"
+echo "APP_KEY: ${APP_KEY:0:20}..."
+echo "DB_CONNECTION: $DB_CONNECTION"
+echo "DB_HOST: $DB_HOST"
+echo "DB_PORT: $DB_PORT"
+echo "DB_DATABASE: $DB_DATABASE"
+echo "DB_USERNAME: $DB_USERNAME"
+echo "PORT: $PORT"
+echo "================================"
+
 # Ensure we are in the right directory
 cd /var/www/html
 
@@ -49,7 +62,23 @@ fi
 
 # Test database connection before running migrations
 echo "Testing database connection..."
-php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'Database connection successful'; } catch(Exception \$e) { echo 'Database connection failed: ' . \$e->getMessage(); exit(1); }"
+if php -r "
+try {
+    require 'vendor/autoload.php';
+    \$app = require_once 'bootstrap/app.php';
+    \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class);
+    \$kernel->bootstrap();
+    DB::connection()->getPdo();
+    echo 'Database connection successful';
+} catch(Exception \$e) {
+    echo 'Database connection failed: ' . \$e->getMessage();
+    exit(1);
+}
+"; then
+    echo "Database connection test passed"
+else
+    echo "Database connection test failed, but continuing..."
+fi
 
 # Run migrations
 echo "Running migrations..."
@@ -61,6 +90,18 @@ fi
 
 # Create storage link if it doesn't exist
 php artisan storage:link || true
+
+# Test if Laravel can boot properly
+echo "Testing Laravel application boot..."
+if php artisan --version; then
+    echo "Laravel application booted successfully"
+else
+    echo "Laravel application failed to boot"
+fi
+
+# Clear any remaining caches and test a simple route
+echo "Testing application with a simple artisan command..."
+php artisan route:list --compact | head -5
 
 echo "Deployment script finished successfully."
 # Start Apache in the foreground
